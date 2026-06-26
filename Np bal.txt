@@ -1,0 +1,785 @@
+# ============================================================
+# Question 1
+# ============================================================
+import re
+
+print("--- 1. Regular Expressions ---")
+text = "The quick brown fox jumps over the lazy dog. The quick brown fox."
+pattern = r"fox"
+match = re.search(pattern, text)
+if match:
+    print(f"Found '{match.group()}' at position {match.start()} in '{text}'")
+all_matches = re.findall(pattern, text)
+print(f"All occurrences of '{pattern}': {all_matches}")
+
+case_insensitive_text = "Apple, apple, APPlE"
+case_insensitive_pattern = r"apple"
+all_ci_matches = re.findall(case_insensitive_pattern, case_insensitive_text, re.IGNORECASE)
+print(f"All case-insensitive occurrences of '{case_insensitive_pattern}': {all_ci_matches}")
+
+
+# ============================================================
+# Question 2
+# ============================================================
+print("\n--- 2. Finite State Automaton (ending with 'ab') ---")
+
+class FSAEndsWithAB:
+    def __init__(self):
+        self.state = 'q0'
+
+    def transition(self, char):
+        if self.state == 'q0':
+            self.state = 'q1' if char == 'a' else 'q0'
+        elif self.state == 'q1':
+            self.state = 'q2' if char == 'b' else ('q1' if char == 'a' else 'q0')
+        elif self.state == 'q2':
+            self.state = 'q1' if char == 'a' else ('q2' if char == 'b' else 'q0')
+
+    def recognizes(self, input_string):
+        self.state = 'q0'
+        for char in input_string:
+            self.transition(char)
+        return self.state == 'q2'
+
+fsa = FSAEndsWithAB()
+
+print(f"'cab' ends with 'ab': {fsa.recognizes('cab')}")
+print(f"'abc' ends with 'ab': {fsa.recognizes('abc')}")
+print(f"'abab' ends with 'ab': {fsa.recognizes('abab')}")
+print(f"'a' ends with 'ab': {fsa.recognizes('a')}")
+print(f"'b' ends with 'ab': {fsa.recognizes('b')}")
+print(f"'' ends with 'ab': {fsa.recognizes('')}")
+print(f"'aaab' ends with 'ab': {fsa.recognizes('aaab')}")
+print(f"'ca' ends with 'ab': {fsa.recognizes('ca')}")
+
+
+# ============================================================
+# Question 3
+# ============================================================
+import nltk
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+from nltk.tokenize import word_tokenize
+from nltk.tag import pos_tag
+from nltk.corpus import wordnet
+
+print("\n--- 3. NLTK Morphological Analysis ---")
+
+resources = {
+    'punkt': 'tokenizers/punkt',
+    'punkt_tab': 'tokenizers/punkt_tab',
+    'wordnet': 'corpora/wordnet',
+    'averaged_perceptron_tagger_eng': 'taggers/averaged_perceptron_tagger_eng'
+}
+
+for data, path in resources.items():
+    try:
+        nltk.data.find(path)
+    except LookupError:
+        nltk.download(data)
+
+text_for_analysis = "running runs ran runner easily beautiful"
+tokens = word_tokenize(text_for_analysis)
+print(f"Tokens: {tokens}")
+
+porter = PorterStemmer()
+stemmed_words = [porter.stem(word) for word in tokens]
+print(f"Stemmed words: {stemmed_words}")
+
+lemmatizer = WordNetLemmatizer()
+lemmatized_words = [lemmatizer.lemmatize(word) for word in tokens]
+print(f"Lemmatized words (default noun): {lemmatized_words}")
+
+def get_wordnet_pos(treebank_tag):
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    if treebank_tag.startswith('V'):
+        return wordnet.VERB
+    if treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    if treebank_tag.startswith('R'):
+        return wordnet.ADV
+    return wordnet.NOUN
+
+pos_tokens = pos_tag(tokens)
+lemmatized_words_pos = [
+    lemmatizer.lemmatize(word, get_wordnet_pos(tag))
+    for word, tag in pos_tokens
+]
+
+print(f"Lemmatized words (with POS tagging): {lemmatized_words_pos}")
+
+
+# ============================================================
+# Question 4
+# ============================================================
+print("\n--- 4. Finite-State Machine for Pluralization ---")
+
+class PluralFSM:
+    def pluralize(self, noun):
+        irregulars = {
+            'man': 'men',
+            'woman': 'women',
+            'child': 'children',
+            'tooth': 'teeth',
+            'foot': 'feet',
+            'mouse': 'mice',
+            'goose': 'geese'
+        }
+
+        if noun in irregulars:
+            return irregulars[noun]
+
+        if noun.endswith('y') and len(noun) > 1 and noun[-2] not in 'aeiou':
+            return noun[:-1] + 'ies'
+
+        if noun.endswith(('ch', 'sh', 'x', 's')):
+            return noun + 'es'
+
+        if noun.endswith('o'):
+            return noun + 'es'
+
+        return noun + 's'
+
+fsm = PluralFSM()
+
+nouns = [
+    'cat', 'dog', 'box', 'bush',
+    'church', 'sky', 'potato',
+    'man', 'apple', 'day', 'boy'
+]
+
+for noun in nouns:
+    print(f"Singular: {noun}, Plural: {fsm.pluralize(noun)}")
+
+
+# ============================================================
+# Question 5
+# ============================================================
+from nltk.stem import PorterStemmer
+
+print("\n--- 5. Porter Stemmer Algorithm ---")
+
+words_to_stem = [
+    "consulting", "consultant", "consults",
+    "consultative", "running", "runner",
+    "runs", "ran", "easily", "generously",
+    "cats", "troubles", "trouble",
+    "beautiful", "beauty"
+]
+
+porter_stemmer = PorterStemmer()
+
+print("Original words | Stemmed words")
+print("------------------------------")
+
+for word in words_to_stem:
+    print(f"{word:<14} | {porter_stemmer.stem(word)}")
+
+
+# ============================================================
+# Question 6
+# ============================================================
+import random
+from collections import defaultdict
+
+print("\n--- 6. N-gram Model (Bigram) for Text Generation ---")
+
+def build_bigram_model(text):
+    words = text.lower().split()
+    model = defaultdict(list)
+
+    for i in range(len(words) - 1):
+        model[words[i]].append(words[i + 1])
+
+    return model
+
+def generate_text(model, start_word, num_words=10):
+    current_word = start_word.lower()
+    generated_text = [current_word]
+
+    for _ in range(num_words - 1):
+        if current_word in model and model[current_word]:
+            current_word = random.choice(model[current_word])
+            generated_text.append(current_word)
+        else:
+            break
+
+    return ' '.join(generated_text)
+
+corpus = "I love natural language processing. Natural language processing is fascinating. I really love this."
+
+bigram_model = build_bigram_model(corpus)
+
+print("Corpus:", corpus)
+print("Generated text (starting with 'i'):", generate_text(bigram_model, 'i', 8))
+print("Generated text (starting with 'processing'):", generate_text(bigram_model, 'processing', 7))
+
+
+# ============================================================
+# Question 7
+# ============================================================
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.tag import pos_tag
+
+print("\n--- 7. NLTK Part-of-Speech Tagging ---")
+
+for data in ['punkt', 'averaged_perceptron_tagger']:
+    try:
+        nltk.data.find(
+            f'tokenizers/{data}'
+            if data == 'punkt'
+            else f'taggers/{data}'
+        )
+    except nltk.downloader.DownloadError:
+        nltk.download(data)
+
+text_for_pos = "The quick brown fox jumps over the lazy dog."
+
+tokens_pos = word_tokenize(text_for_pos)
+pos_tags = pos_tag(tokens_pos)
+
+print(f"Text: '{text_for_pos}'")
+print(f"Tokens: {tokens_pos}")
+print(f"POS Tags: {pos_tags}")
+
+text_for_pos_2 = "NLTK is a powerful library for natural language processing."
+
+tokens_pos_2 = word_tokenize(text_for_pos_2)
+pos_tags_2 = pos_tag(tokens_pos_2)
+
+print(f"\nText: '{text_for_pos_2}'")
+print(f"POS Tags: {pos_tags_2}")
+
+
+# ============================================================
+# Question 8
+# ============================================================
+import random
+from collections import defaultdict
+
+print("\n--- 8. Simple Stochastic Part-of-Speech Tagging ---")
+
+class SimpleStochasticPOSTagger:
+
+    def __init__(self):
+        self.word_tag_counts = defaultdict(lambda: defaultdict(int))
+        self.tag_counts = defaultdict(int)
+
+    def train(self, corpus_sentences):
+        for sentence in corpus_sentences:
+            for word, tag in sentence:
+                self.word_tag_counts[word.lower()][tag] += 1
+                self.tag_counts[tag] += 1
+
+    def tag(self, words):
+        tagged_sentence = []
+
+        for word in words:
+            word_lower = word.lower()
+            possible_tags = self.word_tag_counts[word_lower]
+
+            if not possible_tags:
+                tagged_sentence.append((word, 'NN'))
+                continue
+
+            best_tag = max(possible_tags, key=possible_tags.get)
+            tagged_sentence.append((word, best_tag))
+
+        return tagged_sentence
+
+training_corpus = [
+    [('The', 'DT'), ('dog', 'NN'), ('barks', 'VBZ'), ('.', '.')],
+    [('A', 'DT'), ('cat', 'NN'), ('meows', 'VBZ'), ('.', '.')],
+    [('The', 'DT'), ('cats', 'NNS'), ('sleep', 'VBP'), ('.', '.')],
+    [('The', 'DT'), ('bird', 'NN'), ('sings', 'VBZ'), ('.', '.')]
+]
+
+st_tagger = SimpleStochasticPOSTagger()
+st_tagger.train(training_corpus)
+
+text_to_tag = "The cats bark .".split()
+print(f"Text to tag: {text_to_tag}")
+print(f"Stochastic Tags: {st_tagger.tag(text_to_tag)}")
+
+text_to_tag_2 = "A bird sings .".split()
+print(f"\nText to tag: {text_to_tag_2}")
+print(f"Stochastic Tags: {st_tagger.tag(text_to_tag_2)}")
+
+
+# ============================================================
+# Question 9
+# ============================================================
+import re
+
+print("\n--- 9. Rule-Based Part-of-Speech Tagging (Regular Expressions) ---")
+
+class RegexPOSTagger:
+
+    def __init__(self):
+        self.rules = [
+            (r'.*ing$', 'VBG'),
+            (r'.*ed$', 'VBD'),
+            (r'.*es$', 'VBZ'),
+            (r'.*s$', 'NNS'),
+            (r'.*ly$', 'RB'),
+            (r'.*ful$', 'JJ'),
+            (r'^[A-Z].*$', 'NNP'),
+            (r'the|a|an', 'DT'),
+            (r'.*', 'NN')
+        ]
+
+    def tag(self, words):
+        tagged_sentence = []
+
+        for word in words:
+            found_tag = False
+
+            for pattern, tag_label in self.rules:
+                if re.match(pattern, word, re.IGNORECASE):
+                    tagged_sentence.append((word, tag_label))
+                    found_tag = True
+                    break
+
+            if not found_tag:
+                tagged_sentence.append((word, 'UNKNOWN'))
+
+        return tagged_sentence
+
+regex_tagger = RegexPOSTagger()
+
+text_to_tag_regex = "The running dog quickly barked at a colorful ball.".split()
+
+print(f"Text to tag: {text_to_tag_regex}")
+print(f"Regex Tags: {regex_tagger.tag(text_to_tag_regex)}")
+
+text_to_tag_regex_2 = "Cats happily chase red lasers.".split()
+
+print(f"\nText to tag: {text_to_tag_regex_2}")
+print(f"Regex Tags: {regex_tagger.tag(text_to_tag_regex_2)}")
+# ============================================================
+# Question 10
+# ============================================================
+print("\n--- 10. Transformation-Based Tagging (Simple Rule) ---")
+
+class TransformationTagger:
+    def __init__(self, initial_tagger): self.initial_tagger = initial_tagger; self.transformation_rules = []
+
+    def add_rule(self, condition_func, transform_func): self.transformation_rules.append((condition_func, transform_func))
+
+    def tag(self, words):
+        initial_tagged = self.initial_tagger.tag(words) if self.initial_tagger else [(word, 'NN') for word in words]
+        current_tagged_sentence = list(initial_tagged)
+
+        for i in range(len(current_tagged_sentence)):
+            word, current_tag = current_tagged_sentence[i]
+            for condition_func, transform_func in self.transformation_rules:
+                if condition_func(i, word, current_tag, current_tagged_sentence):
+                    current_tagged_sentence[i] = (word, transform_func(i, word, current_tag, current_tagged_sentence)); break
+        return current_tagged_sentence
+
+class BasicInitialTagger:
+    def tag(self, words):
+        tagged = []
+        for word in words:
+            if word.endswith('s'): tagged.append((word, 'NNS'))
+            elif word in ['the', 'a']: tagged.append((word, 'DT'))
+            elif word.endswith('ed'): tagged.append((word, 'VBD'))
+            else: tagged.append((word, 'NN'))
+        return tagged
+
+def condition_nn_to_vb(idx, word, current_tag, tagged_sentence):
+    return current_tag == 'NN' and idx > 0 and tagged_sentence[idx-1][0].lower() == 'will' and tagged_sentence[idx-1][1] == 'MD'
+def transform_nn_to_vb(*args): return 'VB'
+
+def condition_nns_to_vbz_runs(idx, word, current_tag, tagged_sentence):
+    return current_tag == 'NNS' and word.lower() == 'runs' and idx > 0 and tagged_sentence[idx-1][0].lower() == 'the'
+def transform_nns_to_vbz_runs(*args): return 'VBZ'
+
+initial_tagger = BasicInitialTagger()
+tbl_tagger = TransformationTagger(initial_tagger)
+tbl_tagger.add_rule(condition_nn_to_vb, transform_nn_to_vb)
+tbl_tagger.add_rule(condition_nns_to_vbz_runs, transform_nns_to_vbz_runs)
+
+text_tbl = "The man will run . The dog runs .".split()
+print(f"Text to tag: {text_tbl}\nInitial Tags: {initial_tagger.tag(text_tbl)}\nTransformed Tags: {tbl_tagger.tag(text_tbl)}")
+
+text_tbl_2 = "They all runs fast . The dogs barks .".split()
+print(f"\nText to tag: {text_tbl_2}\nInitial Tags: {initial_tagger.tag(text_tbl_2)}\nTransformed Tags: {tbl_tagger.tag(text_tbl_2)}")
+
+
+# ============================================================
+# Question 11
+# ============================================================
+print("\n--- 11. Top-Down (Recursive Descent) Parser for CFG ---")
+
+grammar = {
+    'S': [['NP', 'VP']], 'NP': [['Det', 'N']], 'VP': [['V', 'NP'], ['V']],
+    'Det': [['the'], ['a']], 'N': [['dog'], ['cat']], 'V': [['saw'], ['ran']]
+}
+
+def parse(symbol, tokens, pos):
+    if symbol not in grammar:
+        return pos + 1 if pos < len(tokens) and tokens[pos] == symbol else None
+    for production in grammar[symbol]:
+        p = pos
+        for sym in production:
+            p = parse(sym, tokens, p)
+            if p is None: break
+        if p is not None: return p
+    return None
+
+for sentence in ["the dog saw a cat", "a cat ran", "dog the saw"]:
+    tokens = sentence.split()
+    end = parse('S', tokens, 0)
+    print(f"'{sentence}' -> {'VALID' if end == len(tokens) else 'INVALID'}")
+
+
+# ============================================================
+# Question 12
+# ============================================================
+print("\n--- 12. Earley Parser for CFG ---")
+
+grammar = {
+    'S': [['NP', 'VP']], 'NP': [['Det', 'N']], 'VP': [['V', 'NP']],
+    'Det': [['the']], 'N': [['dog'], ['cat']], 'V': [['saw']]
+}
+
+def earley(words):
+    chart = [[] for _ in range(len(words) + 1)]
+    chart[0].append(('S', ['S'], 0, 0))
+    for i in range(len(words) + 1):
+        k = 0
+        while k < len(chart[i]):
+            lhs, rhs, dot, start = chart[i][k]; k += 1
+            if dot < len(rhs):
+                nxt = rhs[dot]
+                if nxt in grammar:
+                    for prod in grammar[nxt]:
+                        st = (nxt, prod, 0, i)
+                        if st not in chart[i]: chart[i].append(st)
+                elif i < len(words) and words[i] == nxt:
+                    chart[i+1].append((lhs, rhs, dot+1, start))
+            else:
+                for st in chart[start]:
+                    if st[2] < len(st[1]) and st[1][st[2]] == lhs:
+                        new = (st[0], st[1], st[2]+1, st[3])
+                        if new not in chart[i]: chart[i].append(new)
+    return ('S', ['S'], 1, 0) in chart[len(words)]
+
+for s in ["the dog saw the cat", "the cat saw dog"]:
+    print(f"'{s}' -> {'ACCEPTED' if earley(s.split()) else 'REJECTED'}")
+
+
+# ============================================================
+# Question 13
+# ============================================================
+import nltk
+from nltk import CFG
+
+print("\n--- 13. Parse Tree Generation using CFG ---")
+
+grammar = CFG.fromstring("""
+S -> NP VP
+NP -> Det N
+VP -> V NP
+Det -> 'the' | 'a'
+N -> 'dog' | 'cat'
+V -> 'saw' | 'chased'
+""")
+
+sentence = "the dog chased a cat".split()
+parser = nltk.ChartParser(grammar)
+for tree in parser.parse(sentence):
+    print(tree)
+    tree.pretty_print()
+
+
+# ============================================================
+# Question 14
+# ============================================================
+import nltk
+from nltk import CFG
+
+print("\n--- 14. Subject-Verb Agreement Check using CFG ---")
+
+grammar = CFG.fromstring("""
+S -> NP_sg VP_sg | NP_pl VP_pl
+NP_sg -> Det N_sg
+NP_pl -> Det N_pl
+VP_sg -> V_sg | V_sg NP_sg | V_sg NP_pl
+VP_pl -> V_pl | V_pl NP_sg | V_pl NP_pl
+Det -> 'the'
+N_sg -> 'dog' | 'cat'
+N_pl -> 'dogs' | 'cats'
+V_sg -> 'runs' | 'chases'
+V_pl -> 'run' | 'chase'
+""")
+
+parser = nltk.ChartParser(grammar)
+for sentence in ["the dog runs", "the dogs runs", "the dogs run", "the cat run"]:
+    valid = any(True for _ in parser.parse(sentence.split()))
+    print(f"'{sentence}' -> {'AGREES' if valid else 'AGREEMENT ERROR'}")
+
+
+# ============================================================
+# Question 15
+# ============================================================
+import nltk
+from nltk import PCFG
+from nltk.parse import ViterbiParser
+
+print("\n--- 15. Probabilistic CFG (PCFG) Parsing ---")
+
+grammar = PCFG.fromstring("""
+S -> NP VP [1.0]
+NP -> Det N [0.6] | N [0.4]
+VP -> V NP [0.7] | V [0.3]
+Det -> 'the' [1.0]
+N -> 'dog' [0.5] | 'cat' [0.5]
+V -> 'saw' [1.0]
+""")
+
+sentence = "the dog saw the cat".split()
+parser = ViterbiParser(grammar)
+for tree in parser.parse(sentence):
+    print(tree)
+    print("Probability:", tree.prob())
+
+
+# ============================================================
+# Question 16
+# ============================================================
+import spacy
+
+print("\n--- 16. Named Entity Recognition (NER) with spaCy ---")
+
+nlp = spacy.load("en_core_web_sm")
+text = "Apple is looking at buying U.K. startup for $1 billion. Tim Cook visited London in 2025."
+doc = nlp(text)
+
+for ent in doc.ents:
+    print(f"{ent.text:<15} -> {ent.label_:<8} ({spacy.explain(ent.label_)})")
+
+
+# ============================================================
+# Question 17
+# ============================================================
+from nltk.corpus import wordnet as wn
+
+print("\n--- 17. Exploring WordNet: Synsets and Word Meanings ---")
+
+word = "bank"
+for syn in wn.synsets(word):
+    print(f"\nSynset: {syn.name()} ({syn.pos()})")
+    print(f"  Definition: {syn.definition()}")
+    print(f"  Examples : {syn.examples()}")
+    print(f"  Lemmas   : {[l.name() for l in syn.lemmas()]}")
+
+syn0 = wn.synsets("good", pos=wn.ADJ)[0]
+print(f"\nSynonyms of 'good': {[l.name() for l in syn0.lemmas()]}")
+print(f"Antonyms of 'good': {[a.name() for l in syn0.lemmas() for a in l.antonyms()]}")
+
+
+# ============================================================
+# Question 18
+# ============================================================
+print("\n--- 18. Simple FOPC (First-Order Predicate Calculus) Parser ---")
+
+import re
+
+def parse_fopc(expr):
+    expr = expr.strip()
+    m = re.match(r'(forall|exists)\s+(\w+)\s+(.*)', expr)
+    if m:
+        return {'quantifier': m.group(1), 'variable': m.group(2), 'body': parse_fopc(m.group(3))}
+    for conn in ['->', '&', '|']:
+        if conn in expr:
+            l, r = expr.split(conn, 1)
+            return {'connective': conn, 'left': parse_fopc(l), 'right': parse_fopc(r)}
+    m = re.match(r'(\w+)\((.*)\)', expr)
+    if m:
+        return {'predicate': m.group(1), 'args': [a.strip() for a in m.group(2).split(',')]}
+    return {'atom': expr}
+
+for s in ["forall x Man(x) -> Mortal(x)", "exists y Loves(john, y)"]:
+    print(f"\nInput : {s}\nParsed: {parse_fopc(s)}")
+# ============================================================
+# Question 19
+# ============================================================
+from nltk.wsd import lesk
+from nltk.tokenize import word_tokenize
+
+print("\n--- 19. Word Sense Disambiguation using the Lesk Algorithm ---")
+
+for sentence, word in [
+    ("I went to the bank to deposit my money", "bank"),
+    ("The river overflowed the bank after heavy rain", "bank"),
+]:
+    sense = lesk(word_tokenize(sentence), word)
+    print(f"\nSentence: {sentence}\nWord '{word}' -> {sense.name()}: {sense.definition()}")
+
+
+# ============================================================
+# Question 20
+# ============================================================
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+print("\n--- 20. Information Retrieval with TF-IDF Document Ranking ---")
+
+docs = [
+    "The cat sat on the mat",
+    "Dogs and cats are great pets",
+    "Machine learning models process data",
+    "Deep learning is a subset of machine learning",
+]
+
+query = "machine learning data"
+
+vec = TfidfVectorizer()
+doc_matrix = vec.fit_transform(docs)
+query_vec = vec.transform([query])
+scores = cosine_similarity(query_vec, doc_matrix)[0]
+
+print(f"Query: {query}\nRanked documents:")
+for i in scores.argsort()[::-1]:
+    print(f"  {scores[i]:.3f} -> {docs[i]}")
+
+
+# ============================================================
+# Question 21
+# ============================================================
+import spacy
+
+print("\n--- 21. Syntax-Driven Semantic Analysis: Noun Phrases & Meanings ---")
+
+nlp = spacy.load("en_core_web_sm")
+text = "The hungry brown dog chased a small red ball in the park."
+doc = nlp(text)
+
+for chunk in doc.noun_chunks:
+    head = chunk.root
+    modifiers = [t.text for t in chunk if t.dep_ in ("amod", "compound")]
+    print(f"NP: '{chunk.text}' | head='{head.text}' | role={head.dep_} | modifiers={modifiers}")
+
+
+# ============================================================
+# Question 22
+# ============================================================
+print("\n--- 22. Reference Resolution (Pronoun -> Antecedent) ---")
+
+import spacy
+nlp = spacy.load("en_core_web_sm")
+
+text = "John took the book. He read it carefully. Mary saw John and she smiled."
+doc = nlp(text)
+
+pronouns = {"he":"MASC","she":"FEM","it":"NEUTRAL","him":"MASC","her":"FEM"}
+gender = {"MASC":["John"],"FEM":["Mary"],"NEUTRAL":["book"]}
+
+recent = {"MASC":None,"FEM":None,"NEUTRAL":None}
+
+for tok in doc:
+    if tok.text in ("John","Mary","book"):
+        for g,names in gender.items():
+            if tok.text in names:
+                recent[g]=tok.text
+    elif tok.text.lower() in pronouns:
+        g=pronouns[tok.text.lower()]
+        print(f"Pronoun '{tok.text}' -> {recent[g]}")
+
+
+# ============================================================
+# Question 23
+# ============================================================
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+
+print("\n--- 23. Text Coherence Evaluation ---")
+
+def coherence(text):
+    sents = nltk.sent_tokenize(text)
+    vecs = TfidfVectorizer().fit_transform(sents)
+    sims = [cosine_similarity(vecs[i], vecs[i+1])[0][0] for i in range(len(sents)-1)]
+    return sum(sims)/len(sims), sims
+
+for label,text in [
+    ("Coherent","The cat is a pet. The cat likes to drink milk. Milk is good for the cat."),
+    ("Incoherent","The cat is a pet. Quantum physics is hard. I bought a car yesterday.")
+]:
+    score,sims = coherence(text)
+    print(f"{label}: avg coherence = {score:.3f} (adjacent sims: {[round(s,3) for s in sims]})")
+
+
+# ============================================================
+# Question 24
+# ============================================================
+print("\n--- 24. Dialog Act Recognition ---")
+
+import re
+
+def dialog_act(u):
+    t = u.lower().strip()
+    if re.search(r'\b(hi|hello|hey|good morning)\b', t): return "GREETING"
+    if t.endswith('?') or re.match(r'(what|why|how|when|where|who|is|are|do|can|could)\b', t): return "QUESTION"
+    if re.search(r'\b(thanks|thank you)\b', t): return "THANKING"
+    if re.search(r'\b(bye|goodbye|see you)\b', t): return "FAREWELL"
+    if re.search(r'\b(yes|sure|ok|okay|yeah)\b', t): return "AGREEMENT"
+    if re.search(r'\b(no|nope|not)\b', t): return "REJECTION"
+    return "STATEMENT"
+
+dialog = [
+    "Hello there!",
+    "How are you doing?",
+    "I am fine.",
+    "Can you help me?",
+    "Yes sure.",
+    "Thanks a lot.",
+    "Goodbye!"
+]
+
+for u in dialog:
+    print(f"{u:<20} -> {dialog_act(u)}")
+
+
+# ============================================================
+# Question 25
+# ============================================================
+from openai import OpenAI
+
+print("\n--- 25. Text Generation with OpenAI GPT Model ---")
+
+client = OpenAI()
+
+prompt = "Write a short motivational quote about learning."
+
+response = client.chat.completions.create(
+    model="gpt-3.5-turbo",
+    messages=[{"role":"user","content":prompt}],
+    max_tokens=50,
+)
+
+print(f"Prompt: {prompt}")
+print(f"Generated: {response.choices[0].message.content.strip()}")
+
+
+# ============================================================
+# Question 26
+# ============================================================
+from transformers import pipeline
+
+print("\n--- 26. Machine Translation (English -> French) with Transformers ---")
+
+translator = pipeline(
+    "translation_en_to_fr",
+    model="Helsinki-NLP/opus-mt-en-fr"
+)
+
+for text in [
+    "Hello, how are you?",
+    "Machine learning is fascinating."
+]:
+    result = translator(text)[0]["translation_text"]
+    print(f"EN: {text}\nFR: {result}\n")
