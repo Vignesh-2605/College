@@ -1,0 +1,520 @@
+# Experiment 1
+# Regular Expressions in Python
+
+import re
+
+text = input("Enter a sentence: ")
+
+pattern = r"\d{10}"      # Searches for a 10-digit number
+
+match = re.search(pattern, text)
+
+if match:
+    print("Match Found:", match.group())
+else:
+    print("No Match Found")
+
+# Experiment 2
+# Finite State Automaton
+
+def finite_state_automaton(string):
+
+    if string.endswith("ab"):
+        print("String Accepted")
+    else:
+        print("String Rejected")
+
+
+s = input("Enter a string: ")
+
+finite_state_automaton(s)
+
+# Experiment 3
+# Morphological Analysis
+
+import nltk
+
+from nltk.stem import PorterStemmer
+
+# Download only once
+nltk.download('punkt')
+
+stemmer = PorterStemmer()
+
+word = input("Enter a word: ")
+
+stem = stemmer.stem(word)
+
+print("Original Word :", word)
+print("Stem Word     :", stem)
+
+# Experiment 4
+# Plural Generator
+
+def plural(word):
+
+    if word.endswith(("s", "x", "z", "ch", "sh")):
+        return word + "es"
+
+    elif word.endswith("y") and word[-2] not in "aeiou":
+        return word[:-1] + "ies"
+
+    else:
+        return word + "s"
+
+
+word = input("Enter a noun: ")
+
+print("Singular :", word)
+print("Plural   :", plural(word))
+
+# Experiment 5
+# Porter Stemmer
+
+import nltk
+
+from nltk.stem import PorterStemmer
+
+# Download only once
+nltk.download('punkt')
+
+stemmer = PorterStemmer()
+
+words = [
+    "playing",
+    "played",
+    "plays",
+    "running",
+    "happiness",
+    "studies",
+    "walking"
+]
+
+print("Original Word --> Stemmed Word\n")
+
+for word in words:
+    print(word, "-->", stemmer.stem(word))
+
+# Experiment 6: Bigram Model
+
+import nltk
+from nltk.util import bigrams
+
+# Download tokenizer (only first time)
+nltk.download('punkt')
+
+text = input("Enter a sentence: ")
+
+tokens = nltk.word_tokenize(text)
+
+print("\nBigrams are:")
+
+for bg in bigrams(tokens):
+    print(bg)
+
+# Experiment 7: POS Tagging
+
+import nltk
+
+# Download resources (only first time)
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+sentence = input("Enter a sentence: ")
+
+tokens = nltk.word_tokenize(sentence)
+
+tags = nltk.pos_tag(tokens)
+
+print("\nPOS Tags:")
+
+for word, tag in tags:
+    print(word, ":", tag)
+
+# Experiment 8: Stochastic POS Tagging
+
+import nltk
+from nltk.tag import DefaultTagger
+
+# Download tokenizer
+nltk.download('punkt')
+
+sentence = input("Enter a sentence: ")
+
+tokens = nltk.word_tokenize(sentence)
+
+# Assign NN as default tag
+tagger = DefaultTagger('NN')
+
+tags = tagger.tag(tokens)
+
+print("\nTagged Output:")
+
+for word, tag in tags:
+    print(word, ":", tag)
+
+# Experiment 9: Rule-Based POS Tagging
+
+import nltk
+from nltk.tag import RegexpTagger
+
+patterns = [
+    (r'.*ing$', 'VBG'),
+    (r'.*ed$', 'VBD'),
+    (r'.*es$', 'VBZ'),
+    (r'.*ould$', 'MD'),
+    (r'.*\'s$', 'NN$'),
+    (r'.*s$', 'NNS'),
+    (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),
+    (r'.*', 'NN')
+]
+
+tagger = RegexpTagger(patterns)
+
+sentence = input("Enter a sentence: ")
+
+words = sentence.split()
+
+print("\nTagged Output:")
+
+for word, tag in tagger.tag(words):
+    print(word, ":", tag)
+
+# Experiment 10: Transformation-Based Tagging
+
+sentence = [("Dogs", "NN"), ("bark", "NN"), ("loudly", "RB")]
+
+print("Before Transformation:\n")
+print(sentence)
+
+transformed = []
+
+for word, tag in sentence:
+
+    if word.lower() == "bark":
+        tag = "VB"
+
+    transformed.append((word, tag))
+
+print("\nAfter Transformation:\n")
+print(transformed)
+
+# Experiment 11: Top-Down Parser
+
+import nltk
+from nltk import CFG
+from nltk.parse import TopDownChartParser
+
+grammar = CFG.fromstring("""
+S -> NP VP
+NP -> Det N
+VP -> V NP
+Det -> 'the'
+N -> 'cat' | 'mouse'
+V -> 'chased'
+""")
+
+parser = TopDownChartParser(grammar)
+
+sentence = "the cat chased the mouse".split()
+
+print("Parse Tree:\n")
+
+for tree in parser.parse(sentence):
+    print(tree)
+
+# Experiment 12: Earley Parser
+
+import nltk
+from nltk import CFG
+from nltk.parse import EarleyChartParser
+
+grammar = CFG.fromstring("""
+S -> NP VP
+NP -> 'John'
+NP -> 'apples'
+VP -> V NP
+V -> 'likes'
+""")
+
+parser = EarleyChartParser(grammar)
+
+sentence = "John likes apples".split()
+
+print("Parse Tree:\n")
+
+for tree in parser.parse(sentence):
+    print(tree)
+
+# Experiment 13: Parse Tree
+
+import nltk
+from nltk import CFG
+from nltk.parse import ChartParser
+
+grammar = CFG.fromstring("""
+S -> NP VP
+NP -> Det N
+VP -> V
+Det -> 'The'
+N -> 'boy'
+V -> 'runs'
+""")
+
+parser = ChartParser(grammar)
+
+sentence = "The boy runs".split()
+
+for tree in parser.parse(sentence):
+    print(tree)
+    tree.pretty_print()
+
+# Experiment 14: Subject-Verb Agreement
+
+sentence = input("Enter a sentence: ")
+
+words = sentence.split()
+
+if len(words) >= 2:
+    subject = words[0]
+    verb = words[1]
+
+    if subject.lower() in ["he", "she", "it"] and verb.endswith("s"):
+        print("Agreement Correct")
+
+    elif subject.lower() in ["i", "you", "we", "they"] and not verb.endswith("s"):
+        print("Agreement Correct")
+
+    else:
+        print("Agreement Incorrect")
+else:
+    print("Invalid Sentence")
+
+# Experiment 15: PCFG Parsing
+
+import nltk
+from nltk import PCFG
+from nltk.parse import ViterbiParser
+
+grammar = PCFG.fromstring("""
+S -> NP VP [1.0]
+NP -> 'John' [0.5]
+NP -> 'Mary' [0.5]
+VP -> 'runs' [1.0]
+""")
+
+parser = ViterbiParser(grammar)
+
+sentence = "John runs".split()
+
+for tree in parser.parse(sentence):
+    print(tree)
+
+# Experiment 16: Named Entity Recognition
+
+import spacy
+
+# Load English model
+nlp = spacy.load("en_core_web_sm")
+
+text = input("Enter text: ")
+
+doc = nlp(text)
+
+print("\nNamed Entities:\n")
+
+for ent in doc.ents:
+    print(ent.text, ":", ent.label_)
+
+
+# Experiment 17: WordNet
+
+import nltk
+from nltk.corpus import wordnet
+
+# Download WordNet (only first time)
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+word = input("Enter a word: ")
+
+synsets = wordnet.synsets(word)
+
+if synsets:
+    print("\nSynsets and Meanings:\n")
+    for syn in synsets:
+        print("Synset:", syn.name())
+        print("Definition:", syn.definition())
+        print("Example:", syn.examples())
+        print()
+else:
+    print("No synsets found.")
+
+# Experiment 18: FOPC Parser
+
+expression = input("Enter FOPC Expression (Example: P(x)): ")
+
+if "(" in expression and ")" in expression:
+    predicate = expression.split("(")[0]
+    variable = expression.split("(")[1].replace(")", "")
+
+    print("Valid FOPC Expression")
+    print("Predicate :", predicate)
+    print("Variable  :", variable)
+else:
+    print("Invalid FOPC Expression")
+
+# Experiment 19: Lesk Algorithm
+
+import nltk
+from nltk.wsd import lesk
+from nltk.tokenize import word_tokenize
+
+nltk.download('punkt')
+nltk.download('wordnet')
+
+sentence = input("Enter a sentence: ")
+word = input("Enter the ambiguous word: ")
+
+tokens = word_tokenize(sentence)
+
+sense = lesk(tokens, word)
+
+print("\nBest Sense:")
+print(sense)
+
+if sense:
+    print("Definition:", sense.definition())
+
+# Experiment 20: TF-IDF
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+documents = [
+    "Natural Language Processing",
+    "Machine Learning",
+    "Artificial Intelligence",
+    "Natural Language Understanding"
+]
+
+vectorizer = TfidfVectorizer()
+
+matrix = vectorizer.fit_transform(documents)
+
+print("Vocabulary:\n")
+print(vectorizer.get_feature_names_out())
+
+print("\nTF-IDF Matrix:\n")
+print(matrix.toarray())
+
+# Experiment 21: Syntax-Driven Semantic Analysis
+
+import nltk
+
+nltk.download('punkt')
+nltk.download('averaged_perceptron_tagger')
+
+sentence = input("Enter a sentence: ")
+
+tokens = nltk.word_tokenize(sentence)
+
+tags = nltk.pos_tag(tokens)
+
+grammar = "NP: {<DT>?<JJ>*<NN.*>+}"
+
+chunk_parser = nltk.RegexpParser(grammar)
+
+tree = chunk_parser.parse(tags)
+
+print(tree)
+
+print("\nNoun Phrases:")
+
+for subtree in tree.subtrees():
+    if subtree.label() == 'NP':
+        print(" ".join(word for word, tag in subtree.leaves()))
+
+# Experiment 22: Reference Resolution
+
+text = "Ravi met Arun at the library. He borrowed a book and later returned it."
+
+print("Original Text:\n")
+print(text)
+
+resolved = text.replace("He", "Ravi")
+resolved = resolved.replace("it", "the book")
+
+print("\nResolved Text:\n")
+print(resolved)
+
+# Experiment 23: Text Coherence Evaluation
+
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+
+# Download required package (only first time)
+nltk.download('punkt')
+
+text = input("Enter a paragraph:\n")
+
+sentences = sent_tokenize(text)
+
+print("\nNumber of Sentences:", len(sentences))
+
+for i, sentence in enumerate(sentences, start=1):
+    words = word_tokenize(sentence)
+    print(f"Sentence {i}: {len(words)} words")
+
+# Simple coherence check
+if len(sentences) > 1:
+    print("\nThe text appears to be coherent.")
+else:
+    print("\nThe text may not be coherent.")
+
+# Experiment 24: Dialog Act Recognition
+
+sentence = input("Enter a sentence: ")
+
+if sentence.endswith("?"):
+    print("Dialog Act : Question")
+
+elif sentence.lower().startswith(("please", "kindly")):
+    print("Dialog Act : Request")
+
+elif sentence.endswith("!"):
+    print("Dialog Act : Exclamation")
+
+else:
+    print("Dialog Act : Statement")
+
+# Experiment 25: GPT Text Generation
+
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_API_KEY")
+
+prompt = input("Enter a prompt: ")
+
+response = client.responses.create(
+    model="gpt-4.1-mini",
+    input=prompt
+)
+
+print("\nGenerated Text:\n")
+print(response.output_text)
+
+# Experiment 26: Machine Translation
+
+from transformers import pipeline
+
+translator = pipeline(
+    "translation_en_to_fr",
+    model="Helsinki-NLP/opus-mt-en-fr"
+)
+
+text = input("Enter English text: ")
+
+result = translator(text)
+
+print("\nFrench Translation:")
+print(result[0]["translation_text"])
